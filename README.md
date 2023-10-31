@@ -628,6 +628,8 @@ ControlNet-LLLite, a novel method for ControlNet with SDXL, is added. See [docum
 
 ## Change History
 
+* 2023/11/01 (v22.2.0)
+  - Merge latest sd-script dev branch
 * 2023/10/10 (v22.1.0)
   - Remove support for torch 1 to align with kohya_ss sd-scripts code base.
   - Add Intel ARC GPU support with IPEX support on Linux / WSL
