@@ -630,6 +630,14 @@ ControlNet-LLLite, a novel method for ControlNet with SDXL, is added. See [docum
 
 * 2023/11/01 (v22.2.0)
   - Merge latest sd-script dev branch
+  - `sdxl_train.py` now supports different learning rates for each Text Encoder.
+    - Example:
+      - `--learning_rate 1e-6`: train U-Net only
+      - `--train_text_encoder --learning_rate 1e-6`: train U-Net and two Text Encoders with the same learning rate (same as the previous version)
+      - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train U-Net and two Text Encoders with the different learning rates
+      - `--train_text_encoder --learning_rate 0 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train two Text Encoders only 
+      - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 0`: train U-Net and one Text Encoder only
+      - `--train_text_encoder --learning_rate 0 --learning_rate_te1 0 --learning_rate_te2 1e-6`: train one Text Encoder only
 * 2023/10/10 (v22.1.0)
   - Remove support for torch 1 to align with kohya_ss sd-scripts code base.
   - Add Intel ARC GPU support with IPEX support on Linux / WSL
