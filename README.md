@@ -49,6 +49,11 @@ The GUI allows you to set the training parameters and generate and run the requi
     - [Format of Textual Inversion embeddings for SDXL](#format-of-textual-inversion-embeddings-for-sdxl)
     - [ControlNet-LLLite](#controlnet-lllite)
   - [Change History](#change-history)
+    - [Nov 5, 2023 / 2023/11/5](#nov-5-2023--2023115)
+    - [Naming of LoRA](#naming-of-lora)
+    - [LoRAの名称について](#loraの名称について)
+  - [Sample image generation during training](#sample-image-generation-during-training-1)
+  - [サンプル画像生成](#サンプル画像生成)
 
 
 ## Tutorials
@@ -628,38 +633,117 @@ ControlNet-LLLite, a novel method for ControlNet with SDXL, is added. See [docum
 
 ## Change History
 
-* 2023/11/01 (v22.2.0)
-  - Merge latest sd-script dev branch
-  - `sdxl_train.py` now supports different learning rates for each Text Encoder.
-    - Example:
-      - `--learning_rate 1e-6`: train U-Net only
-      - `--train_text_encoder --learning_rate 1e-6`: train U-Net and two Text Encoders with the same learning rate (same as the previous version)
-      - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train U-Net and two Text Encoders with the different learning rates
-      - `--train_text_encoder --learning_rate 0 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train two Text Encoders only 
-      - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 0`: train U-Net and one Text Encoder only
-      - `--train_text_encoder --learning_rate 0 --learning_rate_te1 0 --learning_rate_te2 1e-6`: train one Text Encoder only
-* 2023/10/10 (v22.1.0)
-  - Remove support for torch 1 to align with kohya_ss sd-scripts code base.
-  - Add Intel ARC GPU support with IPEX support on Linux / WSL
-    - Users needs to set these manually:
-      * Mixed precision to BF16,
-      * Attention to SDPA,
-      * Optimizer to: AdamW (or any other non 8 bit one).
-    - Run setup with: `./setup.sh --use-ipex`
-    - Run the GUI with: `./gui.sh --use-ipex`
-  - Merging main branch of sd-scripts:
-    - `tag_images_by_wd_14_tagger.py` now supports Onnx. If you use Onnx, TensorFlow is not required anymore. [#864](https://github.com/kohya-ss/sd-scripts/pull/864) Thanks to Isotr0py!
-      - `--onnx` option is added. If you use Onnx, specify `--onnx` option.
-      - Please install Onnx and other required packages. 
-        1. Uninstall TensorFlow.
-        2. `pip install tensorboard==2.14.1` This is required for the specified version of protobuf.
-        3. `pip install protobuf==3.20.3` This is required for Onnx.
-        4. `pip install onnx==1.14.1`
-        5. `pip install onnxruntime-gpu==1.16.0` or `pip install onnxruntime==1.16.0`
-    - `--append_tags` option is added to `tag_images_by_wd_14_tagger.py`. This option appends the tags to the existing tags, instead of replacing them. [#858](https://github.com/kohya-ss/sd-scripts/pull/858) Thanks to a-l-e-x-d-s-9! 
-    - [OFT](https://oft.wyliu.com/) is now supported.
-      - You can use `networks.oft` for the network module in `sdxl_train_network.py`.  The usage is the same as `networks.lora`. Some options are not supported.
-      - `sdxl_gen_img.py` also supports OFT as `--network_module`. 
-      - OFT only supports SDXL currently. Because current OFT tweaks Q/K/V and O in the transformer, and SD1/2 have extremely fewer transformers than SDXL.
-      - The implementation is heavily based on laksjdjf's [OFT implementation](https://github.com/laksjdjf/sd-trainer/blob/dev/networks/lora_modules.py). Thanks to laksjdjf!
-    - Other bug fixes and improvements.
+### Nov 5, 2023 / 2023/11/5
+
+- `sdxl_train.py` now supports different learning rates for each Text Encoder.
+  - Example:
+    - `--learning_rate 1e-6`: train U-Net only
+    - `--train_text_encoder --learning_rate 1e-6`: train U-Net and two Text Encoders with the same learning rate (same as the previous version)
+    - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train U-Net and two Text Encoders with the different learning rates
+    - `--train_text_encoder --learning_rate 0 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train two Text Encoders only 
+    - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 0`: train U-Net and one Text Encoder only
+    - `--train_text_encoder --learning_rate 0 --learning_rate_te1 0 --learning_rate_te2 1e-6`: train one Text Encoder only
+
+- `train_db.py` and `fine_tune.py` now support different learning rates for Text Encoder. Specify with `--learning_rate_te` option. 
+  - To train Text Encoder with `fine_tune.py`, specify `--train_text_encoder` option too. `train_db.py` trains Text Encoder by default.
+
+- Fixed the bug that Text Encoder is not trained when block lr is specified in `sdxl_train.py`.
+
+- Debiased Estimation loss is added to each training script. Thanks to sdbds!
+  - Specify `--debiased_estimation_loss` option to enable it. See PR [#889](https://github.com/kohya-ss/sd-scripts/pull/889) for details.
+- Training of Text Encoder is improved in `train_network.py` and `sdxl_train_network.py`. Thanks to KohakuBlueleaf! PR [#895](https://github.com/kohya-ss/sd-scripts/pull/895)
+- The moving average of the loss is now displayed in the progress bar in each training script. Thanks to shirayu! PR [#899](https://github.com/kohya-ss/sd-scripts/pull/899)
+- PagedAdamW32bit optimizer is supported. Specify `--optimizer_type=PagedAdamW32bit`. Thanks to xzuyn! PR [#900](https://github.com/kohya-ss/sd-scripts/pull/900)
+- Other bug fixes and improvements.
+
+- `sdxl_train.py` で、二つのText Encoderそれぞれに独立した学習率が指定できるようになりました。サンプルは上の英語版を参照してください。
+- `train_db.py` および `fine_tune.py` で Text Encoder に別の学習率を指定できるようになりました。`--learning_rate_te` オプションで指定してください。
+  - `fine_tune.py` で Text Encoder を学習するには `--train_text_encoder` オプションをあわせて指定してください。`train_db.py` はデフォルトで学習します。
+- `sdxl_train.py` で block lr を指定すると Text Encoder が学習されない不具合を修正しました。
+- Debiased Estimation loss が各学習スクリプトに追加されました。sdbsd 氏に感謝します。
+  - `--debiased_estimation_loss` を指定すると有効になります。詳細は PR [#889](https://github.com/kohya-ss/sd-scripts/pull/889) を参照してください。
+- `train_network.py` と `sdxl_train_network.py` でText Encoderの学習が改善されました。KohakuBlueleaf 氏に感謝します。 PR [#895](https://github.com/kohya-ss/sd-scripts/pull/895)
+- 各学習スクリプトで移動平均のlossがプログレスバーに表示されるようになりました。shirayu 氏に感謝します。 PR [#899](https://github.com/kohya-ss/sd-scripts/pull/899)
+- PagedAdamW32bit オプティマイザがサポートされました。`--optimizer_type=PagedAdamW32bit` と指定してください。xzuyn 氏に感謝します。 PR [#900](https://github.com/kohya-ss/sd-scripts/pull/900)
+- その他のバグ修正と改善。
+
+
+Please read [Releases](https://github.com/kohya-ss/sd-scripts/releases) for recent updates.
+最近の更新情報は [Release](https://github.com/kohya-ss/sd-scripts/releases) をご覧ください。
+
+### Naming of LoRA
+
+The LoRA supported by `train_network.py` has been named to avoid confusion. The documentation has been updated. The following are the names of LoRA types in this repository.
+
+1. __LoRA-LierLa__ : (LoRA for __Li__ n __e__ a __r__  __La__ yers)
+
+    LoRA for Linear layers and Conv2d layers with 1x1 kernel
+
+2. __LoRA-C3Lier__ : (LoRA for __C__ olutional layers with __3__ x3 Kernel and  __Li__ n __e__ a __r__ layers)
+
+    In addition to 1., LoRA for Conv2d layers with 3x3 kernel 
+    
+LoRA-LierLa is the default LoRA type for `train_network.py` (without `conv_dim` network arg). LoRA-LierLa can be used with [our extension](https://github.com/kohya-ss/sd-webui-additional-networks) for AUTOMATIC1111's Web UI, or with the built-in LoRA feature of the Web UI.
+
+To use LoRA-C3Lier with Web UI, please use our extension.
+
+### LoRAの名称について
+
+`train_network.py` がサポートするLoRAについて、混乱を避けるため名前を付けました。ドキュメントは更新済みです。以下は当リポジトリ内の独自の名称です。
+
+1. __LoRA-LierLa__ : (LoRA for __Li__ n __e__ a __r__  __La__ yers、リエラと読みます)
+
+    Linear 層およびカーネルサイズ 1x1 の Conv2d 層に適用されるLoRA
+
+2. __LoRA-C3Lier__ : (LoRA for __C__ olutional layers with __3__ x3 Kernel and  __Li__ n __e__ a __r__ layers、セリアと読みます)
+
+    1.に加え、カーネルサイズ 3x3 の Conv2d 層に適用されるLoRA
+
+LoRA-LierLa は[Web UI向け拡張](https://github.com/kohya-ss/sd-webui-additional-networks)、またはAUTOMATIC1111氏のWeb UIのLoRA機能で使用することができます。
+
+LoRA-C3Lierを使いWeb UIで生成するには拡張を使用してください。
+
+## Sample image generation during training
+  A prompt file might look like this, for example
+
+```
+# prompt 1
+masterpiece, best quality, (1girl), in white shirts, upper body, looking at viewer, simple background --n low quality, worst quality, bad anatomy,bad composition, poor, low effort --w 768 --h 768 --d 1 --l 7.5 --s 28
+
+# prompt 2
+masterpiece, best quality, 1boy, in business suit, standing at street, looking back --n (low quality, worst quality), bad anatomy,bad composition, poor, low effort --w 576 --h 832 --d 2 --l 5.5 --s 40
+```
+
+  Lines beginning with `#` are comments. You can specify options for the generated image with options like `--n` after the prompt. The following can be used.
+
+  * `--n` Negative prompt up to the next option.
+  * `--w` Specifies the width of the generated image.
+  * `--h` Specifies the height of the generated image.
+  * `--d` Specifies the seed of the generated image.
+  * `--l` Specifies the CFG scale of the generated image.
+  * `--s` Specifies the number of steps in the generation.
+
+  The prompt weighting such as `( )` and `[ ]` are working.
+
+## サンプル画像生成
+プロンプトファイルは例えば以下のようになります。
+
+```
+# prompt 1
+masterpiece, best quality, (1girl), in white shirts, upper body, looking at viewer, simple background --n low quality, worst quality, bad anatomy,bad composition, poor, low effort --w 768 --h 768 --d 1 --l 7.5 --s 28
+
+# prompt 2
+masterpiece, best quality, 1boy, in business suit, standing at street, looking back --n (low quality, worst quality), bad anatomy,bad composition, poor, low effort --w 576 --h 832 --d 2 --l 5.5 --s 40
+```
+
+  `#` で始まる行はコメントになります。`--n` のように「ハイフン二個＋英小文字」の形でオプションを指定できます。以下が使用可能できます。
+
+  * `--n` Negative prompt up to the next option.
+  * `--w` Specifies the width of the generated image.
+  * `--h` Specifies the height of the generated image.
+  * `--d` Specifies the seed of the generated image.
+  * `--l` Specifies the CFG scale of the generated image.
+  * `--s` Specifies the number of steps in the generation.
+
+  `( )` や `[ ]` などの重みづけも動作します。
+
