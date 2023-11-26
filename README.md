@@ -53,7 +53,7 @@ The GUI allows you to set the training parameters and generate and run the requi
     - [Naming of LoRA](#naming-of-lora)
     - [LoRAの名称について](#loraの名称について)
   - [Sample image generation during training](#sample-image-generation-during-training-1)
-  - [サンプル画像生成](#サンプル画像生成)
+  - [Change History](#change-history-1)
 
 
 ## Tutorials
@@ -725,25 +725,35 @@ masterpiece, best quality, 1boy, in business suit, standing at street, looking b
 
   The prompt weighting such as `( )` and `[ ]` are working.
 
-## サンプル画像生成
-プロンプトファイルは例えば以下のようになります。
 
-```
-# prompt 1
-masterpiece, best quality, (1girl), in white shirts, upper body, looking at viewer, simple background --n low quality, worst quality, bad anatomy,bad composition, poor, low effort --w 768 --h 768 --d 1 --l 7.5 --s 28
+## Change History
+* 2023/11/?? (v22.2.1)
+- Fix issue with `Debiased Estimation loss` not getting properly loaded from json file. Oups.
 
-# prompt 2
-masterpiece, best quality, 1boy, in business suit, standing at street, looking back --n (low quality, worst quality), bad anatomy,bad composition, poor, low effort --w 576 --h 832 --d 2 --l 5.5 --s 40
-```
+* 2023/11/15 (v22.2.0)
+- sd-scripts code base update:
+  - `sdxl_train.py` now supports different learning rates for each Text Encoder.
+    - Example:
+      - `--learning_rate 1e-6`: train U-Net only
+      - `--train_text_encoder --learning_rate 1e-6`: train U-Net and two Text Encoders with the same learning rate (same as the previous version)
+      - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train U-Net and two Text Encoders with the different learning rates
+      - `--train_text_encoder --learning_rate 0 --learning_rate_te1 1e-6 --learning_rate_te2 1e-6`: train two Text Encoders only 
+      - `--train_text_encoder --learning_rate 1e-6 --learning_rate_te1 1e-6 --learning_rate_te2 0`: train U-Net and one Text Encoder only
+      - `--train_text_encoder --learning_rate 0 --learning_rate_te1 0 --learning_rate_te2 1e-6`: train one Text Encoder only
 
-  `#` で始まる行はコメントになります。`--n` のように「ハイフン二個＋英小文字」の形でオプションを指定できます。以下が使用可能できます。
+  - `train_db.py` and `fine_tune.py` now support different learning rates for Text Encoder. Specify with `--learning_rate_te` option. 
+    - To train Text Encoder with `fine_tune.py`, specify `--train_text_encoder` option too. `train_db.py` trains Text Encoder by default.
 
-  * `--n` Negative prompt up to the next option.
-  * `--w` Specifies the width of the generated image.
-  * `--h` Specifies the height of the generated image.
-  * `--d` Specifies the seed of the generated image.
-  * `--l` Specifies the CFG scale of the generated image.
-  * `--s` Specifies the number of steps in the generation.
+  - Fixed the bug that Text Encoder is not trained when block lr is specified in `sdxl_train.py`.
 
-  `( )` や `[ ]` などの重みづけも動作します。
+  - Debiased Estimation loss is added to each training script. Thanks to sdbds!
+    - Specify `--debiased_estimation_loss` option to enable it. See PR [#889](https://github.com/kohya-ss/sd-scripts/pull/889) for details.
+  - Training of Text Encoder is improved in `train_network.py` and `sdxl_train_network.py`. Thanks to KohakuBlueleaf! PR [#895](https://github.com/kohya-ss/sd-scripts/pull/895)
+  - The moving average of the loss is now displayed in the progress bar in each training script. Thanks to shirayu! PR [#899](https://github.com/kohya-ss/sd-scripts/pull/899)
+  - PagedAdamW32bit optimizer is supported. Specify `--optimizer_type=PagedAdamW32bit`. Thanks to xzuyn! PR [#900](https://github.com/kohya-ss/sd-scripts/pull/900)
+  - Other bug fixes and improvements.
+- kohya_ss gui updates:
+  - Implement GUI support for SDXL finetune TE1 and TE2 training LR parameters and for non SDXL finetune TE training parameter
+  - Implement GUI support for Dreambooth TE LR parameter
+  - Implement Debiased Estimation loss at the botom of the Advanced Parameters tab.
 

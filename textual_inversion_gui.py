@@ -792,6 +792,7 @@ def ti_tab(
                     learning_rate_value='1e-5',
                     lr_scheduler_value='cosine',
                     lr_warmup_value='10',
+                    sdxl_checkbox=source_model.sdxl_checkbox,
                 )
 
                 # Add SDXL Parameters
@@ -839,7 +840,7 @@ def ti_tab(
 
         button_start_tensorboard.click(
             start_tensorboard,
-            inputs=folders.logging_dir,
+            inputs=[dummy_headless, folders.logging_dir],
             show_progress=False,
         )
 

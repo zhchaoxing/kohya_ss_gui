@@ -550,7 +550,7 @@ def set_pretrained_model_name_or_path_input(
 
     # Check if the given model_list is in the list of V1 models
     if str(model_list) in V1_MODELS:
-        log.info('SD v1.4 model selected.')
+        log.info(f'{model_list} model selected.')
         v2 = gr.Checkbox.update(value=False, visible=False)
         v_parameterization = gr.Checkbox.update(value=False, visible=False)
         sdxl = gr.Checkbox.update(value=False, visible=False)
@@ -881,6 +881,12 @@ def run_cmd_advanced_training(**kwargs):
     wandb_api_key = kwargs.get('wandb_api_key', '')
     if wandb_api_key:
         run_cmd += f' --wandb_api_key="{wandb_api_key}"'
+        
+    vae = kwargs.get(
+        'vae'
+    )
+    if vae:
+        run_cmd += f' --vae="{vae}"'
 
     return run_cmd
 
