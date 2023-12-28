@@ -1,95 +1,20 @@
 [general]
-resolution = 768
-caption_extension = ".txt"
+caption_extension = '.txt'
+keep_tokens = 1
+
+[[datasets]]
+resolution = [768, 768]
+keep_tokens = 2
+# train_batch_size = 16
+batch_size = 16
 bucket_reso_steps = 64
 enable_bucket = true
 min_bucket_reso = 512
 max_bucket_reso = 1536
 validation_seed = 6789
 validation_split = 0.2
-# train_batch_size = 16
-batch_size = 16
-
-# resolution = "768,768"
-
-[[datasets]]
-# keep_tokens = 2
 
  [[datasets.subsets]]
  image_dir = '/home/ubuntu/data/ds3'
-# class_tokens = 'ohwx person'
  num_repeats = 1
- # dataset_repeats = 1
-#
-# [[datasets.subsets]]
-# is_reg = true
-# image_dir = 'training_datasets/reg_images/person/'
-# class_tokens = 'person'
-# num_repeats = 1
-# keep_tokens = 1
-
-
-# [datasets]
-# SUBSET_ASCENDABLE_SCHEM # subset schema
-# "color_aug": bool,
-# "face_crop_aug_range": functools.partial(__validate_and_convert_twodim.__func__, float),
-# "flip_aug": bool,
-# num_repeats = 1
-# "random_crop": bool,
-# "shuffle_caption": bool,
-# "keep_tokens": int,
-# "token_warmup_min": int,
-# "token_warmup_step": Any(float,int),
-# "caption_prefix": str,
-# "caption_suffix": str,
-
-# DO_SUBSET_ASCENDABLE_SCHEMA # DO means DropOut
-# "caption_dropout_every_n_epochs": int,
-# "caption_dropout_rate": Any(float, int),
-# "caption_tag_dropout_rate": Any(float, int),
-
-# DB_SUBSET_ASCENDABLE_SCHEMA # DB means DreamBooth
-# caption_extension = ".txt",
-# "class_tokens": str,
-
-# DB_SUBSET_DISTINCT_SCHEMA
-# Required("image_dir"): str,
-# "is_reg": bool,
-
-# CN_SUBSET_ASCENDABLE_SCHEMA
-#caption_extension = ".txt"
-
-# CN_SUBSET_DISTINCT_SCHEMA
-#    Required("image_dir"): str,
-#    Required("conditioning_data_dir"): str,
-
-# DATASET_ASCENDABLE_SCHEMA # datasets schema
-# "batch_size": int,
-# "bucket_no_upscale": bool,
-#bucket_reso_steps = 64
-#enable_bucket = true
-#min_bucket_reso = 512
-#max_bucket_reso = 1536
-#validation_seed = 6789
-#validation_split = 0.2
-#resolution = "768,768"
-
-
-# options handled by argparse but not handled by user config
-# ARGPARSE_SPECIFIC_SCHEMA = {
-# "debug_dataset": bool,
-# "max_token_length": Any(None, int),
-# "prior_loss_weight": Any(float, int),
-# }
-
-# for handling default None value of argparse
-# ARGPARSE_NULLABLE_OPTNAMES = [
-# "face_crop_aug_range",
-# "resolution",
-# ]
-
-# ARGPARSE_OPTNAME_TO_CONFIG_OPTNAME # prepare map because option name may differ among argparse and user confi
-# "train_batch_size": "batch_size",
-#train_batch_size = 16
-## "dataset_repeats": "num_repeats",
-#dataset_repeats = 1
+ keep_tokens = 2
