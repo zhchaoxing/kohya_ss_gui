@@ -1,0 +1,44 @@
+[dataset]
+# Path to your data folder
+data_path = "/home/ubuntu/data/ds3"
+# Number of repeats
+num_repeats = 1
+# Resolution
+resolution = "768,768"
+# Minimum bucket resolution
+min_bucket_reso = 512
+# Maximum bucket resolution
+max_bucket_reso = 1536
+# Learning rate
+learning_rate = "8e-07"
+# Learning rate scheduler
+lr_scheduler = "cosine_with_restarts"
+# Training batch size
+train_batch_size = "16"
+# Maximum training steps
+max_train_steps = "162488"
+# Save every n epochs
+save_every_n_epochs = "1"
+# Mixed precision
+mixed_precision = "no"
+# Save precision
+save_precision = "fp16"
+# Seed
+seed = "1234"
+# Caption extension
+caption_extension = ".txt"
+# Optimizer type
+optimizer_type = "AdamW8bit"
+# Clip skip
+clip_skip = 2
+# VAE batch size
+vae_batch_size = "5"
+# Bucket resolution steps
+bucket_reso_steps = 64
+# Save last n steps state
+save_last_n_steps_state = "300"
+# Noise offset
+noise_offset = 0.05
+
+validation_seed=6789
+validation_split=0.2
