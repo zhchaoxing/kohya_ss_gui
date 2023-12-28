@@ -39,6 +39,7 @@ bucket_reso_steps = 64
 save_last_n_steps_state = "300"
 # Noise offset
 noise_offset = 0.05
-
-validation_seed=6789
-validation_split=0.2
+# Validation seed
+validation_seed = 6789
+# Validation split
+validation_split = 0.2
