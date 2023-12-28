@@ -1,4 +1,35 @@
-[dataset]
+[general]
+resolution = 768
+caption_extension = ".txt"
+bucket_reso_steps = 64
+enable_bucket = true
+min_bucket_reso = 512
+max_bucket_reso = 1536
+validation_seed = 6789
+validation_split = 0.2
+# train_batch_size = 16
+batch_size = 16
+
+# resolution = "768,768"
+
+[[datasets]]
+# keep_tokens = 2
+
+ [[datasets.subsets]]
+ image_dir = '/home/ubuntu/data/ds3'
+# class_tokens = 'ohwx person'
+ num_repeats = 1
+ # dataset_repeats = 1
+#
+# [[datasets.subsets]]
+# is_reg = true
+# image_dir = 'training_datasets/reg_images/person/'
+# class_tokens = 'person'
+# num_repeats = 1
+# keep_tokens = 1
+
+
+# [datasets]
 # SUBSET_ASCENDABLE_SCHEM # subset schema
 # "color_aug": bool,
 # "face_crop_aug_range": functools.partial(__validate_and_convert_twodim.__func__, float),
@@ -26,7 +57,7 @@
 # "is_reg": bool,
 
 # CN_SUBSET_ASCENDABLE_SCHEMA
-caption_extension = ".txt"
+#caption_extension = ".txt"
 
 # CN_SUBSET_DISTINCT_SCHEMA
 #    Required("image_dir"): str,
@@ -35,13 +66,13 @@ caption_extension = ".txt"
 # DATASET_ASCENDABLE_SCHEMA # datasets schema
 # "batch_size": int,
 # "bucket_no_upscale": bool,
-bucket_reso_steps = 64
-enable_bucket = true
-min_bucket_reso = 512
-max_bucket_reso = 1536
-validation_seed = 6789
-validation_split = 0.2
-resolution = "768,768"
+#bucket_reso_steps = 64
+#enable_bucket = true
+#min_bucket_reso = 512
+#max_bucket_reso = 1536
+#validation_seed = 6789
+#validation_split = 0.2
+#resolution = "768,768"
 
 
 # options handled by argparse but not handled by user config
@@ -59,6 +90,6 @@ resolution = "768,768"
 
 # ARGPARSE_OPTNAME_TO_CONFIG_OPTNAME # prepare map because option name may differ among argparse and user confi
 # "train_batch_size": "batch_size",
-train_batch_size = 16
-# "dataset_repeats": "num_repeats",
-dataset_repeats = 1
+#train_batch_size = 16
+## "dataset_repeats": "num_repeats",
+#dataset_repeats = 1
