@@ -1,1 +1,36 @@
-accelerate launch --num_cpu_threads_per_process=2 "./fine_tune.py" --v2 --v_parameterization --pretrained_model_name_or_path="/home/ubuntu/stable-diffusion-webui/models/Stable-diffusion/AIRI_v0.1.safetensors" --in_json="/home/ubuntu/data/output/ds3/config/meta_lat3.6.json" --output_dir="/home/ubuntu/stable-diffusion-webui/models/Stable-diffusion" --logging_dir="/home/ubuntu/data/output/ds3/logs" --enable_bucket --save_model_as=safetensors --output_name="AIRI_v0.1_test_finetuning3.6" --mem_eff_attn --flip_aug --gradient_checkpointing --xformers --persistent_data_loader_workers
+accelerate launch --num_cpu_threads_per_process=2 "./fine_tune.py" \
+--v2 \
+--v_parameterization \
+--pretrained_model_name_or_path="/home/ubuntu/stable-diffusion-webui/models/Stable-diffusion/AIRI_v0.1.safetensors" \
+--in_json="/home/ubuntu/data/output/ds3/config/meta_lat3.6.json" \
+--train_data_dir="/home/ubuntu/data/ds3" \
+--output_dir="/home/ubuntu/stable-diffusion-webui/models/Stable-diffusion" \
+--logging_dir="/home/ubuntu/data/output/ds3/logs" \
+--dataset_repeats=1 \
+--enable_bucket \
+--resolution="768,768" \
+--min_bucket_reso=512 \
+--max_bucket_reso=1536 \
+--save_model_as=safetensors \
+--output_name="AIRI_v0.1_test_finetuning3.6" \
+--learning_rate="8e-07" \
+--lr_scheduler="cosine_with_restarts" \
+--train_batch_size="16" \
+--max_train_steps="162488" \
+--save_every_n_epochs="1" \
+--mixed_precision="no" \
+--save_precision="fp16" \
+--seed="1234" \
+--caption_extension=".txt" \
+--optimizer_type="AdamW8bit" \
+--clip_skip=2 \
+--vae_batch_size="5" \
+--bucket_reso_steps=64 \
+--save_last_n_steps_state="300" \
+--mem_eff_attn \
+--flip_aug \
+--gradient_checkpointing \
+--xformers \
+--persistent_data_loader_workers \
+--noise_offset=0.05 \
+--dataset_config=dataset_config.toml
