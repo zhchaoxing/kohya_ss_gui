@@ -1,0 +1,19 @@
+[general]
+shuffle_caption = false
+keep_tokens = 1
+
+# これは fine tuning 方式のデータセット
+[[datasets]]
+resolution = [768, 768]
+batch_size = 16
+bucket_reso_steps = 64
+enable_bucket = true
+min_bucket_reso = 512
+max_bucket_reso = 1536
+validation_seed = 6789
+validation_split = 0.2
+
+  [[datasets.subsets]]
+  image_dir = '/home/ubuntu/data/ds3'
+  metadata_file = '/home/ubuntu/data/output/ds3/config/meta_lat3.5.json'
+  # このサブセットは keep_tokens = 1 （general の値が使われる）

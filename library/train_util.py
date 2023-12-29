@@ -123,6 +123,40 @@ IMAGE_TRANSFORMS = transforms.Compose(
 TEXT_ENCODER_OUTPUTS_CACHE_SUFFIX = "_te_outputs.npz"
 
 
+def split_train_val_DB(paths, is_train, validation_split, validation_seed):
+    if validation_seed is not None:
+        print(f"Using validation seed: {validation_seed}")
+        prevstate = random.getstate()
+        random.seed(validation_seed)
+        random.shuffle(paths)
+        random.setstate(prevstate)
+    else:
+        random.shuffle(paths)
+
+    if is_train:
+        return paths[0:math.ceil(len(paths) * (1 - validation_split))]
+    else:
+        return paths[len(paths) - round(len(paths) * validation_split):]
+
+
+def split_train_val_FT(metadata, is_train, validation_split, validation_seed):
+    items = list(metadata.items())
+    if validation_seed is not None:
+        print(f"Using validation seed: {validation_seed}")
+        prevstate = random.getstate()
+        random.seed(validation_seed)
+        random.shuffle(items)
+        random.setstate(prevstate)
+    else:
+        random.shuffle(items)
+
+    if is_train:
+        return dict(items[0:math.ceil(len(items) * (1 - validation_split))])
+    else:
+        return dict(items[len(items) - round(len(items) * validation_split):])
+
+
+
 class ImageInfo:
     def __init__(self, image_key: str, num_repeats: int, caption: str, is_reg: bool, absolute_path: str) -> None:
         self.image_key: str = image_key
@@ -842,7 +876,7 @@ class BaseDataset(torch.utils.data.Dataset):
             print(f"mean ar error (without repeats): {mean_img_ar_error}")
 
         # データ参照用indexを作る。このindexはdatasetのshuffleに用いられる
-        self.buckets_indices: List(BucketBatchIndex) = []
+        self.buckets_indices: List[BucketBatchIndex] = []
         for bucket_index, bucket in enumerate(self.bucket_manager.buckets):
             batch_count = int(math.ceil(len(bucket) / self.batch_size))
             for batch_index in range(batch_count):
@@ -1342,6 +1376,7 @@ class DreamBoothDataset(BaseDataset):
     def __init__(
         self,
         subsets: Sequence[DreamBoothSubset],
+        is_train: bool,
         batch_size: int,
         tokenizer,
         max_token_length,
@@ -1352,11 +1387,17 @@ class DreamBoothDataset(BaseDataset):
         bucket_reso_steps: int,
         bucket_no_upscale: bool,
         prior_loss_weight: float,
+        validation_split: float,
+        validation_seed: Optional[int],
         debug_dataset,
     ) -> None:
         super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
 
         assert resolution is not None, f"resolution is required / resolution（解像度）指定は必須です"
+
+        self.is_train = is_train
+        self.validation_split = validation_split
+        self.validation_seed = validation_seed
 
         self.batch_size = batch_size
         self.size = min(self.width, self.height)  # 短いほう
@@ -1410,6 +1451,8 @@ class DreamBoothDataset(BaseDataset):
                 return [], []
 
             img_paths = glob_images(subset.image_dir, "*")
+            if self.validation_split > 0.0:
+                img_paths = split_train_val_DB(img_paths, self.is_train, self.validation_split, self.validation_seed)
             print(f"found directory {subset.image_dir} contains {len(img_paths)} image files")
 
             # 画像ファイルごとにプロンプトを読み込み、もしあればそちらを使う
@@ -1516,6 +1559,7 @@ class FineTuningDataset(BaseDataset):
     def __init__(
         self,
         subsets: Sequence[FineTuningSubset],
+        is_train: bool,
         batch_size: int,
         tokenizer,
         max_token_length,
@@ -1525,9 +1569,15 @@ class FineTuningDataset(BaseDataset):
         max_bucket_reso: int,
         bucket_reso_steps: int,
         bucket_no_upscale: bool,
+        validation_split: float,
+        validation_seed: Optional[int],
         debug_dataset,
     ) -> None:
         super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
+
+        self.is_train = is_train
+        self.validation_split = validation_split
+        self.validation_seed = validation_seed
 
         self.batch_size = batch_size
 
@@ -1558,6 +1608,8 @@ class FineTuningDataset(BaseDataset):
             if len(metadata) < 1:
                 print(f"ignore subset with '{subset.metadata_file}': no image entries found / 画像に関するデータが見つからないためサブセットを無視します")
                 continue
+
+            metadata = split_train_val_FT(metadata, self.is_train, self.validation_split, self.validation_seed)
 
             tags_list = []
             for image_key, img_md in metadata.items():
