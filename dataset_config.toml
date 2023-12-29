@@ -1,6 +1,5 @@
 [general]
 shuffle_caption = false
-caption_extension = '.txt'
 keep_tokens = 1
 
 # これは fine tuning 方式のデータセット
