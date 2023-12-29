@@ -39,7 +39,7 @@ from library.custom_train_functions import (
 )
 
 
-def process_batch(self, batch, is_train, tokenizers, text_encoders, unet, vae, noise_scheduler, vae_dtype, weight_dtype,
+def process_batch(self, batch, is_train, tokenizer, text_encoder, unet, vae, noise_scheduler, vae_dtype, weight_dtype,
                   accelerator, args, train_text_encoder=True):
     with torch.no_grad():
         if "latents" in batch and batch["latents"] is not None:
@@ -62,8 +62,8 @@ def process_batch(self, batch, is_train, tokenizers, text_encoders, unet, vae, n
         # Get the text embedding for conditioning
         if args.weighted_captions:
             encoder_hidden_states = get_weighted_text_embeddings(
-                tokenizers[0],  # from validation loss # tokenizer,
-                text_encoders[0],  # from validation loss # text_encoder,
+                tokenizer,
+                text_encoder,
                 batch["captions"],
                 accelerator.device,
                 args.max_token_length // 75 if args.max_token_length else 1,
@@ -412,7 +412,7 @@ def train(args):
             current_step.value = global_step
             with accelerator.accumulate(training_models[0]):  # 複数モデルに対応していない模様だがとりあえずこうしておく
                 is_train = True
-                loss = process_batch(batch, is_train, tokenizers, text_encoders, unet, vae, noise_scheduler,
+                loss = process_batch(batch, is_train, tokenizer, text_encoder, unet, vae, noise_scheduler,
                                           vae_dtype, weight_dtype, accelerator, args,
                                           train_text_encoder=train_text_encoder)
                 accelerator.backward(loss)
@@ -478,7 +478,7 @@ def train(args):
         with torch.no_grad():
             for val_step, batch in enumerate(val_dataloader):
                 is_train = False
-                loss = process_batch(batch, is_train, tokenizers, text_encoders, unet, vae,
+                loss = process_batch(batch, is_train, tokenizer, text_encoder, unet, vae,
                                           noise_scheduler, vae_dtype, weight_dtype, accelerator, args)
 
                 current_loss = loss.detach().item()
