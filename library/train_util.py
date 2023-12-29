@@ -123,7 +123,7 @@ IMAGE_TRANSFORMS = transforms.Compose(
 TEXT_ENCODER_OUTPUTS_CACHE_SUFFIX = "_te_outputs.npz"
 
 
-def split_train_val(paths, is_train, validation_split, validation_seed):
+def split_train_val_DB(paths, is_train, validation_split, validation_seed):
     if validation_seed is not None:
         print(f"Using validation seed: {validation_seed}")
         prevstate = random.getstate()
@@ -137,6 +137,24 @@ def split_train_val(paths, is_train, validation_split, validation_seed):
         return paths[0:math.ceil(len(paths) * (1 - validation_split))]
     else:
         return paths[len(paths) - round(len(paths) * validation_split):]
+
+
+def split_train_val_FT(metadata, is_train, validation_split, validation_seed):
+    items = list(metadata.items())
+    if validation_seed is not None:
+        print(f"Using validation seed: {validation_seed}")
+        prevstate = random.getstate()
+        random.seed(validation_seed)
+        random.shuffle(items)
+        random.setstate(prevstate)
+    else:
+        random.shuffle(items)
+
+    if is_train:
+        return dict(items[0:math.ceil(len(items) * (1 - validation_split))])
+    else:
+        return dict(items[len(items) - round(len(items) * validation_split):])
+
 
 
 class ImageInfo:
@@ -1414,7 +1432,7 @@ class DreamBoothDataset(BaseDataset):
 
             img_paths = glob_images(subset.image_dir, "*")
             if self.validation_split > 0.0:
-                img_paths = split_train_val(img_paths, self.is_train, self.validation_split, self.validation_seed)
+                img_paths = split_train_val_DB(img_paths, self.is_train, self.validation_split, self.validation_seed)
             print(f"found directory {subset.image_dir} contains {len(img_paths)} image files")
 
             # 画像ファイルごとにプロンプトを読み込み、もしあればそちらを使う
@@ -1521,6 +1539,7 @@ class FineTuningDataset(BaseDataset):
     def __init__(
         self,
         subsets: Sequence[FineTuningSubset],
+        is_train: bool,
         batch_size: int,
         tokenizer,
         max_token_length,
@@ -1530,9 +1549,15 @@ class FineTuningDataset(BaseDataset):
         max_bucket_reso: int,
         bucket_reso_steps: int,
         bucket_no_upscale: bool,
+        validation_split: float,
+        validation_seed: Optional[int],
         debug_dataset,
     ) -> None:
         super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
+
+        self.is_train = is_train
+        self.validation_split = validation_split
+        self.validation_seed = validation_seed
 
         self.batch_size = batch_size
 
@@ -1559,6 +1584,8 @@ class FineTuningDataset(BaseDataset):
                     metadata = json.load(f)
             else:
                 raise ValueError(f"no metadata / メタデータファイルがありません: {subset.metadata_file}")
+
+            metadata = split_train_val_FT(metadata, self.is_train, self.validation_split, self.validation_seed)
 
             if len(metadata) < 1:
                 print(f"ignore subset with '{subset.metadata_file}': no image entries found / 画像に関するデータが見つからないためサブセットを無視します")
