@@ -5,7 +5,7 @@ keep_tokens = 1
 # これは fine tuning 方式のデータセット
 [[datasets]]
 resolution = [768, 768]
-batch_size = 16
+batch_size = 12
 bucket_reso_steps = 64
 enable_bucket = true
 min_bucket_reso = 512
