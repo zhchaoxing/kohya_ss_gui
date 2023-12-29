@@ -508,13 +508,6 @@ def generate_dataset_group_by_blueprint(dataset_group_blueprint: DatasetGroupBlu
             metadata_file: {subset.metadata_file}
           \n"""), "    ")
 
-    print(info)
-
-  print_info(datasets)
-
-  if len(val_datasets) > 0:
-    print("Validation dataset")
-    print_info(val_datasets)
 
     print(info)
 
