@@ -15,5 +15,5 @@ validation_split = 0.2
 
   [[datasets.subsets]]
   image_dir = '/home/ubuntu/data/ds3'
-  metadata_file = '/home/ubuntu/data/output/ds3/config/meta_lat3.6.json'
+  metadata_file = '/home/ubuntu/data/output/ds3/config/meta_lat3.5.json'
   # このサブセットは keep_tokens = 1 （general の値が使われる）
