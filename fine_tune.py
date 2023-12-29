@@ -47,29 +47,36 @@ def process_batch(self, batch, is_train, tokenizers, text_encoders, unet, vae, n
         else:
             # latentに変換
             latents = vae.encode(batch["images"].to(accelerator.device, dtype=vae_dtype)).latent_dist.sample()
+            # latents = vae.encode(batch["images"].to(dtype=weight_dtype)).latent_dist.sample()
 
             # NaNが含まれていれば警告を表示し0に置き換える
             if torch.any(torch.isnan(latents)):
                 accelerator.print("NaN found in latents, replacing with zeros")
                 latents = torch.where(torch.isnan(latents), torch.zeros_like(latents), latents)
         latents = latents * self.vae_scale_factor
+        # latents = latents * 0.18215
     b_size = latents.shape[0]
 
-    with torch.set_grad_enabled(is_train and train_text_encoder), accelerator.autocast():
+    with torch.set_grad_enabled(is_train and train_text_encoder), accelerator.autocast(): # from validation loss
+    # with torch.set_grad_enabled(args.train_text_encoder):
         # Get the text embedding for conditioning
         if args.weighted_captions:
-            text_encoder_conds = get_weighted_text_embeddings(
-                tokenizers[0],
-                text_encoders[0],
+            encoder_hidden_states = get_weighted_text_embeddings(
+                tokenizers[0],  # from validation loss # tokenizer,
+                text_encoders[0],  # from validation loss # text_encoder,
                 batch["captions"],
                 accelerator.device,
                 args.max_token_length // 75 if args.max_token_length else 1,
                 clip_skip=args.clip_skip,
             )
         else:
-            text_encoder_conds = self.get_text_cond(
-                args, accelerator, batch, tokenizers, text_encoders, weight_dtype
+            input_ids = batch["input_ids"].to(accelerator.device)
+            encoder_hidden_states = train_util.get_hidden_states(
+                args, input_ids, tokenizer, text_encoder, None if not args.full_fp16 else weight_dtype
             )
+            # encoder_hidden_states = self.get_text_cond(  # from validation loss
+            #     args, accelerator, batch, tokenizers, text_encoders, weight_dtype
+            # )
 
     # Sample noise, sample a random timestep for each image, and add noise to the latents,
     # with noise offset and/or multires noise if specified
@@ -78,10 +85,12 @@ def process_batch(self, batch, is_train, tokenizers, text_encoders, unet, vae, n
     )
 
     # Predict the noise residual
-    with torch.set_grad_enabled(is_train), accelerator.autocast():
+    with torch.set_grad_enabled(is_train), accelerator.autocast():  # from validation loss
         noise_pred = self.call_unet(
-            args, accelerator, unet, noisy_latents, timesteps, text_encoder_conds, batch, weight_dtype
+            args, accelerator, unet, noisy_latents, timesteps, encoder_hidden_states, batch, weight_dtype
         )
+    # with accelerator.autocast():
+    #     noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
 
     if args.v_parameterization:
         # v-parameterization training
@@ -89,22 +98,24 @@ def process_batch(self, batch, is_train, tokenizers, text_encoders, unet, vae, n
     else:
         target = noise
 
-    loss = torch.nn.functional.mse_loss(noise_pred.float(), target.float(), reduction="none")
-    loss = loss.mean([1, 2, 3])
+    if args.min_snr_gamma or args.scale_v_pred_loss_like_noise_pred or args.debiased_estimation_loss:
+        # do not mean over batch dimension for snr weight or scale v-pred loss
+        loss = torch.nn.functional.mse_loss(noise_pred.float(), target.float(), reduction="none")
+        loss = loss.mean([1, 2, 3])
 
-    loss_weights = batch["loss_weights"].to(accelerator.device)  # 各sampleごとのweight
-    loss = loss * loss_weights
+        loss_weights = batch["loss_weights"].to(accelerator.device)  # 各sampleごとのweight
+        loss = loss * loss_weights
 
-    if args.min_snr_gamma:
-        loss = apply_snr_weight(loss, timesteps, noise_scheduler, args.min_snr_gamma)
-    if args.scale_v_pred_loss_like_noise_pred:
-        loss = scale_v_prediction_loss_like_noise_prediction(loss, timesteps, noise_scheduler)
-    if args.v_pred_like_loss:
-        loss = add_v_prediction_like_loss(loss, timesteps, noise_scheduler, args.v_pred_like_loss)
-    if args.debiased_estimation_loss:
-        loss = apply_debiased_estimation(loss, timesteps, noise_scheduler)
+        if args.min_snr_gamma:
+            loss = apply_snr_weight(loss, timesteps, noise_scheduler, args.min_snr_gamma, args.v_parameterization)
+        if args.scale_v_pred_loss_like_noise_pred:
+            loss = scale_v_prediction_loss_like_noise_prediction(loss, timesteps, noise_scheduler)
+        if args.debiased_estimation_loss:
+            loss = apply_debiased_estimation(loss, timesteps, noise_scheduler)
 
-    loss = loss.mean()  # 平均なのでbatch_sizeで割る必要なし
+        loss = loss.mean()  # 平均なのでbatch_sizeで割る必要なし
+    else:
+        loss = torch.nn.functional.mse_loss(noise_pred.float(), target.float(), reduction="mean")
 
     return loss
 
@@ -484,7 +495,7 @@ def train(args):
                     logs = {"loss/validation_average": avr_loss}
                     accelerator.log(logs, step=epoch + 1)
 
-    if args.logging_dir is not None:
+        if args.logging_dir is not None:
             logs = {"loss/epoch_average": loss_recorder.moving_average}
             accelerator.log(logs, step=epoch + 1)
 
