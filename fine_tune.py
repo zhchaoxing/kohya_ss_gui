@@ -39,7 +39,7 @@ from library.custom_train_functions import (
 )
 
 
-def process_batch(self, batch, is_train, tokenizer, text_encoder, unet, vae, noise_scheduler, vae_dtype, weight_dtype,
+def process_batch(batch, is_train, tokenizer, text_encoder, unet, vae, noise_scheduler, vae_dtype, weight_dtype,
                   accelerator, args):
     with torch.no_grad():
         if "latents" in batch and batch["latents"] is not None:
@@ -53,8 +53,8 @@ def process_batch(self, batch, is_train, tokenizer, text_encoder, unet, vae, noi
             if torch.any(torch.isnan(latents)):
                 accelerator.print("NaN found in latents, replacing with zeros")
                 latents = torch.where(torch.isnan(latents), torch.zeros_like(latents), latents)
-        latents = latents * self.vae_scale_factor
-        # latents = latents * 0.18215
+        # latents = latents * self.vae_scale_factor
+        latents = latents * 0.18215
     b_size = latents.shape[0]
 
     with torch.set_grad_enabled(is_train and args.train_text_encoder), accelerator.autocast(): # from validation loss
@@ -85,12 +85,12 @@ def process_batch(self, batch, is_train, tokenizer, text_encoder, unet, vae, noi
     )
 
     # Predict the noise residual
-    with torch.set_grad_enabled(is_train), accelerator.autocast():  # from validation loss
-        noise_pred = self.call_unet(
-            args, accelerator, unet, noisy_latents, timesteps, encoder_hidden_states, batch, weight_dtype
-        )
-    # with accelerator.autocast():
-    #     noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
+    # with torch.set_grad_enabled(is_train), accelerator.autocast():  # from validation loss
+    #     noise_pred = self.call_unet(
+    #         args, accelerator, unet, noisy_latents, timesteps, encoder_hidden_states, batch, weight_dtype
+    #     )
+    with accelerator.autocast():
+        noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
 
     if args.v_parameterization:
         # v-parameterization training
