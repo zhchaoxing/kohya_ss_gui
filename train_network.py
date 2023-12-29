@@ -148,7 +148,7 @@ class NetworkTrainer:
                 # NaNが含まれていれば警告を表示し0に置き換える
                 if torch.any(torch.isnan(latents)):
                     accelerator.print("NaN found in latents, replacing with zeros")
-                    latents = torch.where(torch.isnan(latents), torch.zeros_like(latents), latents)
+                    latents = torch.nan_to_num(latents, 0, out=latents)
             latents = latents * self.vae_scale_factor
         b_size = latents.shape[0]
 
@@ -193,7 +193,7 @@ class NetworkTrainer:
         loss = loss * loss_weights
 
         if args.min_snr_gamma:
-            loss = apply_snr_weight(loss, timesteps, noise_scheduler, args.min_snr_gamma)
+            loss = apply_snr_weight(loss, timesteps, noise_scheduler, args.min_snr_gamma, args.v_parameterization)
         if args.scale_v_pred_loss_like_noise_pred:
             loss = scale_v_prediction_loss_like_noise_prediction(loss, timesteps, noise_scheduler)
         if args.v_pred_like_loss:
