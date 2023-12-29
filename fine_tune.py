@@ -40,7 +40,7 @@ from library.custom_train_functions import (
 
 
 def process_batch(self, batch, is_train, tokenizer, text_encoder, unet, vae, noise_scheduler, vae_dtype, weight_dtype,
-                  accelerator, args, train_text_encoder=True):
+                  accelerator, args):
     with torch.no_grad():
         if "latents" in batch and batch["latents"] is not None:
             latents = batch["latents"].to(accelerator.device)
@@ -57,7 +57,7 @@ def process_batch(self, batch, is_train, tokenizer, text_encoder, unet, vae, noi
         # latents = latents * 0.18215
     b_size = latents.shape[0]
 
-    with torch.set_grad_enabled(is_train and train_text_encoder), accelerator.autocast(): # from validation loss
+    with torch.set_grad_enabled(is_train and args.train_text_encoder), accelerator.autocast(): # from validation loss
     # with torch.set_grad_enabled(args.train_text_encoder):
         # Get the text embedding for conditioning
         if args.weighted_captions:
@@ -414,8 +414,7 @@ def train(args):
             with accelerator.accumulate(training_models[0]):  # 複数モデルに対応していない模様だがとりあえずこうしておく
                 is_train = True
                 loss = process_batch(batch, is_train, tokenizer, text_encoder, unet, vae, noise_scheduler,
-                                          vae_dtype, weight_dtype, accelerator, args,
-                                          train_text_encoder=train_text_encoder)
+                                          vae_dtype, weight_dtype, accelerator, args)
                 accelerator.backward(loss)
                 if accelerator.sync_gradients and args.max_grad_norm != 0.0:
                     params_to_clip = []
