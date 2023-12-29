@@ -412,7 +412,7 @@ def train(args):
             current_step.value = global_step
             with accelerator.accumulate(training_models[0]):  # 複数モデルに対応していない模様だがとりあえずこうしておく
                 is_train = True
-                loss = self.process_batch(batch, is_train, tokenizers, text_encoders, unet, vae, noise_scheduler,
+                loss = process_batch(batch, is_train, tokenizers, text_encoders, unet, vae, noise_scheduler,
                                           vae_dtype, weight_dtype, accelerator, args,
                                           train_text_encoder=train_text_encoder)
                 accelerator.backward(loss)
@@ -478,7 +478,7 @@ def train(args):
         with torch.no_grad():
             for val_step, batch in enumerate(val_dataloader):
                 is_train = False
-                loss = self.process_batch(batch, is_train, tokenizers, text_encoders, unet, vae,
+                loss = process_batch(batch, is_train, tokenizers, text_encoders, unet, vae,
                                           noise_scheduler, vae_dtype, weight_dtype, accelerator, args)
 
                 current_loss = loss.detach().item()
