@@ -1585,11 +1585,11 @@ class FineTuningDataset(BaseDataset):
             else:
                 raise ValueError(f"no metadata / メタデータファイルがありません: {subset.metadata_file}")
 
-            metadata = split_train_val_FT(metadata, self.is_train, self.validation_split, self.validation_seed)
-
             if len(metadata) < 1:
                 print(f"ignore subset with '{subset.metadata_file}': no image entries found / 画像に関するデータが見つからないためサブセットを無視します")
                 continue
+
+            metadata = split_train_val_FT(metadata, self.is_train, self.validation_split, self.validation_seed)
 
             tags_list = []
             for image_key, img_md in metadata.items():
